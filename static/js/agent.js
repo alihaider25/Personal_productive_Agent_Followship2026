@@ -44,8 +44,11 @@ document.getElementById("chat-form").addEventListener("submit", async function (
     chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: "smooth" });
 
     const loadingId = "loading-" + Date.now();
-    chatWindow.innerHTML += `<div class="msg-block" id="${loadingId}"><div class="chat-bubble-bot"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>`;
+    chatWindow.innerHTML += `<div class="msg-block" id="${loadingId}"><div class="chat-bubble-bot"><div class="agent-status" id="status-${loadingId}"></div></div></div>`;
     chatWindow.scrollTo({ top: chatWindow.scrollHeight, behavior: "smooth" });
+
+    const statusEl = document.getElementById(`status-${loadingId}`);
+    const stopStatusSequence = runStatusSequence(statusEl);
 
     try {
         const response = await fetch("/agent/chat", {
@@ -53,12 +56,26 @@ document.getElementById("chat-form").addEventListener("submit", async function (
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: message, session_key: sessionKey })
         });
+
+        if (!response.ok) {
+            stopStatusSequence();
+            document.getElementById(loadingId).outerHTML =
+                `<div class="msg-block"><div class="chat-bubble-bot error-bubble"><i class="bi bi-exclamation-triangle"></i> Something went wrong on the server (error ${response.status}). Please try again.</div></div>`;
+            return;
+        }
+
         const data = await response.json();
 
         if (data.session_key) {
             sessionKey = data.session_key;
             localStorage.setItem("agent_session_key", sessionKey);
         }
+
+        stopStatusSequence();
+
+        // Brief final status before showing the answer
+        statusEl.innerHTML = statusHTML("bi-check-circle", "Producing final response", "status-done");
+        await new Promise(r => setTimeout(r, 350));
 
         let tag = "";
         if (data.needs_approval) {
@@ -68,23 +85,51 @@ document.getElementById("chat-form").addEventListener("submit", async function (
         }
 
         const structuredHtml = renderStructuredResult(data.tool_used, data.result);
+        const isError = data.reply && (data.reply.toLowerCase().includes("something went wrong") || data.reply.toLowerCase().includes("couldn't complete") || data.reply.toLowerCase().includes("not found"));
 
         const msgBlock = document.createElement("div");
         msgBlock.className = "msg-block";
-        msgBlock.innerHTML = `<div class="chat-bubble-bot"></div>`;
+        msgBlock.innerHTML = `<div class="chat-bubble-bot ${isError ? 'error-bubble' : ''}"></div>`;
         document.getElementById(loadingId).replaceWith(msgBlock);
 
         const bubbleEl = msgBlock.querySelector(".chat-bubble-bot");
-        const finalHtml = data.reply + structuredHtml + tag;
+        const finalHtml = (isError ? `<i class="bi bi-exclamation-triangle"></i> ` : '') + data.reply + structuredHtml + tag;
         typeWriterEffect(bubbleEl, data.reply, finalHtml, 10);
 
         if (window.refreshApprovalBadge) window.refreshApprovalBadge();
 
     } catch (err) {
-        document.getElementById(loadingId).outerHTML = `<div class="msg-block"><div class="chat-bubble-bot text-danger">Error: ${err}</div></div>`;
+        stopStatusSequence();
+        document.getElementById(loadingId).outerHTML =
+            `<div class="msg-block"><div class="chat-bubble-bot error-bubble"><i class="bi bi-exclamation-triangle"></i> Network error — please check your connection and try again.</div></div>`;
     }
 });
 
+function statusHTML(icon, label, extraClass = "") {
+    return `<span class="agent-status-item ${extraClass}"><i class="bi ${icon}"></i> ${label}</span>`;
+}
+
+function runStatusSequence(statusEl) {
+    const steps = [
+        { icon: "bi-cpu", label: "Thinking", delay: 0 },
+        { icon: "bi-signpost-2", label: "Analyzing intent", delay: 900 },
+        { icon: "bi-tools", label: "Selecting tool", delay: 1900 },
+        { icon: "bi-gear-wide-connected", label: "Executing", delay: 2900 },
+    ];
+
+    const timeouts = steps.map(step =>
+        setTimeout(() => {
+            statusEl.innerHTML = statusHTML(step.icon, step.label);
+        }, step.delay)
+    );
+
+    // Initial state immediately
+    statusEl.innerHTML = statusHTML(steps[0].icon, steps[0].label);
+
+    return function stop() {
+        timeouts.forEach(t => clearTimeout(t));
+    };
+}
 function priorityBadge(priority) {
     if (!priority) return "";
     return `<span class="priority-badge priority-${priority}">${priority}</span>`;

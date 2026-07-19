@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Notes{% endblock %}
+
+{% block content %}
+<div class="container-fluid page-scroll">
+    <div class="row mt-4">
+        <div class="col-md-9 offset-md-1">
+            <h4 class="mb-1"><i class="bi bi-journal-bookmark"></i> Saved Notes</h4>
+            <p class="text-muted mb-4">{{ notes|length }} note(s) saved via the agent</p>
+
+            {% if notes %}
+            <div class="task-card-grid">
+                {% for n in notes %}
+                <div class="task-card status-border-completed">
+                    <div class="task-card-title">{{ n.title }}</div>
+                    <div class="task-card-desc">{{ n.content }}</div>
+                    <div class="task-card-meta">
+                        <div class="meta-row"><i class="bi bi-hash"></i> Note #{{ n.id }}</div>
+                        <div class="meta-row"><i class="bi bi-clock-history"></i> {{ n.created_at.strftime('%b %d, %Y %H:%M') }}</div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-journal-x"></i>
+                <p>No notes saved yet. Ask the agent to "save a note" to get started.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -629,3 +629,26 @@ h4 { font-weight: 700; letter-spacing: -0.01em; }
     margin-right: 8px;
     font-variant-numeric: tabular-nums;
 }
+/* ===== Agent status indicator ===== */
+.agent-status { display: flex; align-items: center; }
+.agent-status-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    animation: statusFade 0.3s var(--ease);
+}
+.agent-status-item i { color: var(--primary); font-size: 14px; animation: statusPulse 1.2s infinite ease-in-out; }
+.agent-status-item.status-done i { color: var(--green); animation: none; }
+@keyframes statusFade { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes statusPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+/* ===== Error bubble ===== */
+.error-bubble {
+    background: var(--red-soft) !important;
+    border-color: rgba(220, 38, 38, 0.25) !important;
+    color: #991B1B !important;
+}
+.error-bubble i { color: var(--red); margin-right: 6px; }

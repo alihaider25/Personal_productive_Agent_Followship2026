@@ -4,6 +4,7 @@ from models.db_models import db
 from routes.logs_routes import logs_bp
 from routes.tasks_routes import tasks_bp
 from routes.plans_routes import plans_bp
+from routes.notes_routes import notes_bp
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
@@ -22,7 +23,7 @@ def create_app():
     app.register_blueprint(logs_bp)
     app.register_blueprint(tasks_bp)
     app.register_blueprint(plans_bp)
-
+    app.register_blueprint(notes_bp)
     return app
 
 app = create_app()
