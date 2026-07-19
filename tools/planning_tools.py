@@ -27,7 +27,11 @@ def _save_plan(session_key, plan_type, date_range, tasks):
     return plan.id
 
 
-def generate_daily_plan(session_key, date=None):
+def generate_daily_plan(session_key, date=None, available_hours=8):
+    """
+    Generates an ordered daily schedule.
+    available_hours: how many working hours the user has today (default 8).
+    """
     target_date_str = date or datetime.utcnow().date().isoformat()
 
     try:
@@ -39,55 +43,90 @@ def generate_daily_plan(session_key, date=None):
 
     if not all_pending:
         _save_plan(session_key, "daily", target_date_str, [])
-        return {"success": True, "date": target_date_str, "task_count": 0, "tasks": []}
+        return {
+            "success": True, "date": target_date_str, "task_count": 0,
+            "tasks": [], "deferred": [], "focus_areas": [], "risk_warnings": []
+        }
 
     due_today = [t for t in all_pending if t.due_date and t.due_date.date() == target]
     overdue = [t for t in all_pending if t.due_date and t.due_date.date() < target]
     upcoming = [t for t in all_pending if t.due_date and t.due_date.date() > target]
     no_date = [t for t in all_pending if not t.due_date]
 
-    relevant_tasks = overdue + due_today
-    if not relevant_tasks:
+    candidate_tasks = overdue + due_today
+    if not candidate_tasks:
         upcoming_sorted = sorted(upcoming, key=lambda t: t.due_date)
-        relevant_tasks = upcoming_sorted[:3] + no_date
+        candidate_tasks = upcoming_sorted[:3] + no_date
+
+    # Sort by priority (high first), matching how much time we realistically have
+    priority_order = {"high": 0, "normal": 1, "low": 2}
+    candidate_tasks = sorted(candidate_tasks, key=lambda t: priority_order.get(t.priority, 1))
+
+    # Assume ~90 minutes per task; fit as many as available_hours allows
+    minutes_per_task = 90
+    max_tasks_that_fit = max(1, (available_hours * 60) // minutes_per_task)
+
+    scheduled = candidate_tasks[:max_tasks_that_fit]
+    deferred = candidate_tasks[max_tasks_that_fit:]
+
+    scheduled_with_times = _assign_time_slots(scheduled)
+
+    # Focus areas: summarize by priority makeup
+    high_count = sum(1 for t in scheduled if t.priority == "high")
+    focus_areas = []
+    if high_count > 0:
+        focus_areas.append(f"{high_count} high-priority task(s) scheduled first")
+    if overdue:
+        focus_areas.append(f"Clearing {len(overdue)} overdue item(s)")
+    if not focus_areas:
+        focus_areas.append("Steady progress on upcoming deadlines")
+
+    # Risk warnings
+    risk_warnings = []
+    if len(overdue) > 0:
+        risk_warnings.append(f"{len(overdue)} task(s) are already overdue.")
+    if len(deferred) > 0:
+        risk_warnings.append(f"{len(deferred)} task(s) don't fit in your {available_hours}-hour day and were deferred.")
+    high_priority_deferred = [t for t in deferred if t.priority == "high"]
+    if high_priority_deferred:
+        risk_warnings.append(f"{len(high_priority_deferred)} high-priority task(s) were deferred — consider freeing up more time.")
 
     task_data = [
-        {"id": t.id, "title": t.title, "priority": t.priority, "due_date": str(t.due_date) if t.due_date else None}
-        for t in relevant_tasks
+        {"id": t["id"], "title": t["title"], "priority": t["priority"],
+         "due_date": t["due_date"], "suggested_time": t["suggested_time"]}
+        for t in scheduled_with_times
+    ]
+    deferred_data = [
+        {"id": t.id, "title": t.title, "priority": t.priority}
+        for t in deferred
     ]
 
-    # Assign suggested time slots based on priority/urgency
-    scheduled_tasks = _assign_time_slots(task_data)
-
-    plan_id = _save_plan(session_key, "daily", target_date_str, scheduled_tasks)
+    plan_id = _save_plan(session_key, "daily", target_date_str, task_data)
 
     return {
         "success": True,
         "plan_id": plan_id,
         "date": target_date_str,
-        "task_count": len(scheduled_tasks),
-        "tasks": scheduled_tasks
+        "available_hours": available_hours,
+        "task_count": len(task_data),
+        "tasks": task_data,
+        "deferred": deferred_data,
+        "focus_areas": focus_areas,
+        "risk_warnings": risk_warnings
     }
 
 
-def _assign_time_slots(task_data):
-    """Assigns suggested time slots across a typical working day (9 AM - 6 PM), 
-    prioritizing high-priority/overdue tasks earliest."""
-    if not task_data:
+def _assign_time_slots(scheduled_tasks):
+    """Assigns suggested time slots across a working day starting 9 AM, skipping lunch (1-2 PM)."""
+    if not scheduled_tasks:
         return []
 
-    # Sort: high priority first, then normal, then low
-    priority_order = {"high": 0, "normal": 1, "low": 2}
-    sorted_tasks = sorted(task_data, key=lambda t: priority_order.get(t.get("priority", "normal"), 1))
-
-    # Working day slots: 9 AM to 6 PM, 90-minute blocks
     start_hour = 9
     slot_minutes = 90
-    scheduled = []
+    result = []
 
-    for i, task in enumerate(sorted_tasks):
+    for i, task in enumerate(scheduled_tasks):
         slot_start_minutes = start_hour * 60 + (i * slot_minutes)
-        # Skip lunch hour (1 PM - 2 PM)
         if 13 * 60 <= slot_start_minutes < 14 * 60:
             slot_start_minutes += 60
 
@@ -102,11 +141,15 @@ def _assign_time_slots(task_data):
             display_hour = 12 if display_hour == 0 else display_hour
             time_label = f"{display_hour}:{minute:02d} {period}"
 
-        task_with_time = dict(task)
-        task_with_time["suggested_time"] = time_label
-        scheduled.append(task_with_time)
+        result.append({
+            "id": task.id,
+            "title": task.title,
+            "priority": task.priority,
+            "due_date": str(task.due_date) if task.due_date else None,
+            "suggested_time": time_label
+        })
 
-    return scheduled
+    return result
 def generate_weekly_plan(session_key):
     today = datetime.utcnow().date()
     week_end = today + timedelta(days=7)

@@ -141,30 +141,35 @@ function renderStructuredResult(toolName, result) {
     // Task list style tools
     if (["list_tasks", "create_tasks_from_text", "generate_daily_plan", "generate_weekly_plan"].includes(toolName)) {
     const tasks = result.tasks || [];
-    if (tasks.length === 0) return "";
-    const rows = tasks.map(t => `
-        <div class="result-list-item">
-            <span>${t.suggested_time ? `<span class="time-slot">${t.suggested_time}</span> ` : ''}${t.title}</span>
-            <span>${priorityBadge(t.priority)} ${t.due_date ? `<span class="text-muted" style="font-size:11px;">${t.due_date.split(' ')[0]}</span>` : ''}</span>
-        </div>
-    `).join("");
-    return `<div class="result-card"><div class="result-card-header">${tasks.length} task(s)</div>${rows}</div>`;
+    let html = "";
+
+    if (tasks.length > 0) {
+        const rows = tasks.map(t => `
+            <div class="result-list-item">
+                <span>${t.suggested_time ? `<span class="time-slot">${t.suggested_time}</span> ` : ''}${t.title}</span>
+                <span>${priorityBadge(t.priority)} ${t.due_date ? `<span class="text-muted" style="font-size:11px;">${t.due_date.split(' ')[0]}</span>` : ''}</span>
+            </div>
+        `).join("");
+        html += `<div class="result-card"><div class="result-card-header">${tasks.length} task(s)</div>${rows}</div>`;
     }
 
-    // Priority analysis with recommendation
-    if (toolName === "analyze_priorities") {
-        let html = `<div class="result-card">
-            <div class="stat-grid">
-                <div class="stat-box"><div class="stat-num">${result.total_pending}</div><div class="stat-label">Pending</div></div>
-                <div class="stat-box"><div class="stat-num">${result.overdue_count}</div><div class="stat-label">Overdue</div></div>
-                <div class="stat-box"><div class="stat-num">${result.high_priority_count}</div><div class="stat-label">High Priority</div></div>
-                <div class="stat-box"><div class="stat-num">${(result.overdue_count||0)+(result.high_priority_count||0)}</div><div class="stat-label">Needs Attention</div></div>
-            </div>
-        </div>`;
-        if (result.recommendation) {
-            html += `<div class="recommendation-box"><i class="bi bi-lightbulb"></i> ${result.recommendation}</div>`;
-        }
-        return html;
+    if (result.focus_areas && result.focus_areas.length > 0) {
+        html += `<div class="recommendation-box"><i class="bi bi-bullseye"></i> ${result.focus_areas.join(" · ")}</div>`;
+    }
+
+    if (result.deferred && result.deferred.length > 0) {
+        const deferredRows = result.deferred.map(t => `
+            <div class="result-list-item"><span>${t.title}</span>${priorityBadge(t.priority)}</div>
+        `).join("");
+        html += `<div class="result-card" style="margin-top:10px;"><div class="result-card-header">Deferred (${result.deferred.length})</div>${deferredRows}</div>`;
+    }
+
+    if (result.risk_warnings && result.risk_warnings.length > 0) {
+        const warningsHtml = result.risk_warnings.map(w => `<div class="risk-warning"><i class="bi bi-exclamation-triangle"></i> ${w}</div>`).join("");
+        html += warningsHtml;
+    }
+
+    return html;
     }
 
     // Productivity report

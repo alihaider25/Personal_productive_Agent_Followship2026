@@ -53,11 +53,12 @@ register_tool(
 register_tool(
     name="generate_daily_plan",
     schema={
-        "date": {"type": "string", "required": False, "format": "ISO date, defaults to today"}
+        "date": {"type": "string", "required": False, "format": "ISO date, defaults to today"},
+        "available_hours": {"type": "integer", "required": False, "format": "Working hours available today, defaults to 8"}
     },
     func=generate_daily_plan,
     requires_approval=False,
-    description="Generates a plan for a single specific day based on tasks due that day."
+    description="Generates a full daily schedule based on tasks due, priority, and available working hours. Returns an ordered schedule, deferred tasks that don't fit, focus areas, and risk warnings. Use for 'plan my day' requests, especially if the user mentions how many hours they have."
 )
 
 register_tool(
