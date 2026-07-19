@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Agent Chat{% endblock %}
+
+{% block content %}
+<div class="chat-layout">
+
+    <div class="sidebar">
+        <div class="sidebar-label">Quick Actions</div>
+        <button class="quick-action" data-text="Show me all my pending tasks"><i class="bi bi-list-check"></i> List my tasks</button>
+        <button class="quick-action" data-text="Prepare a daily work plan using my pending tasks"><i class="bi bi-calendar-day"></i> Daily plan</button>
+        <button class="quick-action" data-text="Give me a plan for this week"><i class="bi bi-calendar-week"></i> Weekly plan</button>
+        <button class="quick-action" data-text="Find tasks that are overdue and recommend what I should work on first"><i class="bi bi-flag"></i> Priorities</button>
+        <button class="quick-action" data-text="Prepare a weekly productivity report"><i class="bi bi-bar-chart"></i> Productivity report</button>
+
+        <div class="sidebar-label" style="margin-top: 20px;">Available Tools</div>
+        <div class="tool-list">
+            <div class="tool-chip">create_task</div>
+            <div class="tool-chip">create_tasks_from_text</div>
+            <div class="tool-chip">list_tasks</div>
+            <div class="tool-chip approval-required">complete_task</div>
+            <div class="tool-chip">generate_daily_plan</div>
+            <div class="tool-chip">generate_weekly_plan</div>
+            <div class="tool-chip">generate_productivity_report</div>
+            <div class="tool-chip">analyze_priorities</div>
+            <div class="tool-chip">summarize_notes</div>
+            <div class="tool-chip">save_note</div>
+            <div class="tool-chip">search_notes</div>
+            <div class="tool-chip">draft_email</div>
+        </div>
+    </div>
+
+    <div class="chat-main">
+        <div id="chat-window">
+            <div class="text-muted text-center mt-5">
+                Ask me to create tasks, plan your day or week, check priorities, draft emails, save notes, or generate a productivity report.
+            </div>
+        </div>
+
+        <div class="input-float">
+            <form id="chat-form">
+                <input type="text" id="user-input" placeholder="e.g. Create a task to submit report by Friday" autocomplete="off" required>
+                <button type="submit" aria-label="Send"><i class="bi bi-send-fill"></i></button>
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/agent.js') }}"></script>
+{% endblock %}

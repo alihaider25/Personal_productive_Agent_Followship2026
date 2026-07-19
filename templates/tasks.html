@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Tasks{% endblock %}
+
+{% block content %}
+<div class="tasks-layout">
+
+    <div class="tasks-sidebar">
+        <div class="sidebar-label">Filter</div>
+        <a href="/tasks?filter=all" class="filter-item {{ 'active' if filter_type == 'all' else '' }}">
+            <span><i class="bi bi-grid-3x3-gap"></i> All Tasks</span>
+            <span class="filter-count">{{ counts.all }}</span>
+        </a>
+        <a href="/tasks?filter=pending" class="filter-item {{ 'active' if filter_type == 'pending' else '' }}">
+            <span><i class="bi bi-hourglass-split"></i> In Progress</span>
+            <span class="filter-count">{{ counts.pending }}</span>
+        </a>
+        <a href="/tasks?filter=completed" class="filter-item {{ 'active' if filter_type == 'completed' else '' }}">
+            <span><i class="bi bi-check-circle"></i> Completed</span>
+            <span class="filter-count">{{ counts.completed }}</span>
+        </a>
+        <a href="/tasks?filter=rejected" class="filter-item {{ 'active' if filter_type == 'rejected' else '' }}">
+            <span><i class="bi bi-x-circle"></i> Rejected</span>
+            <span class="filter-count">{{ counts.rejected }}</span>
+        </a>
+    </div>
+
+    <div class="tasks-main">
+        <h4 class="mb-1">
+            {% if filter_type == 'all' %}All Tasks
+            {% elif filter_type == 'pending' %}In Progress
+            {% elif filter_type == 'completed' %}Completed Tasks
+            {% elif filter_type == 'rejected' %}Rejected Actions
+            {% endif %}
+        </h4>
+        <p class="text-muted mb-4">{{ tasks|length }} task(s)</p>
+
+        {% if tasks %}
+        <div class="task-card-grid">
+            {% for t in tasks %}
+            <div class="task-card status-border-{{ t.status }}">
+                <div class="task-card-header">
+                    <span class="task-status-badge status-{{ t.status }}">{{ t.status }}</span>
+                    <span class="priority-badge priority-{{ t.priority }}">{{ t.priority }}</span>
+                </div>
+                <div class="task-card-title">{{ t.title }}</div>
+                {% if t.description %}
+                <div class="task-card-desc">{{ t.description }}</div>
+                {% endif %}
+                <div class="task-card-meta">
+                    <div class="meta-row">
+                        <i class="bi bi-hash"></i> Task #{{ t.id }}
+                    </div>
+                    {% if t.due_date %}
+                    <div class="meta-row">
+                        <i class="bi bi-calendar-event"></i> Due {{ t.due_date.strftime('%b %d, %Y') }}
+                    </div>
+                    {% else %}
+                    <div class="meta-row text-muted">
+                        <i class="bi bi-calendar-x"></i> No due date
+                    </div>
+                    {% endif %}
+                    <div class="meta-row">
+                        <i class="bi bi-clock-history"></i> Created {{ t.created_at.strftime('%b %d, %Y %H:%M') }}
+                    </div>
+                    <div class="meta-row">
+                        <i class="bi bi-key"></i> Session: {{ t.session_key[:12] }}...
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-inbox"></i>
+            <p>No tasks in this view.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

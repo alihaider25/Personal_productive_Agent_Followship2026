@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Plans{% endblock %}
+
+{% block content %}
+<div class="tasks-layout">
+
+    <div class="tasks-sidebar">
+        <div class="sidebar-label">Filter</div>
+        <a href="/plans?filter=all" class="filter-item {{ 'active' if filter_type == 'all' else '' }}">
+            <span><i class="bi bi-grid-3x3-gap"></i> All Plans</span>
+            <span class="filter-count">{{ counts.all }}</span>
+        </a>
+        <a href="/plans?filter=daily" class="filter-item {{ 'active' if filter_type == 'daily' else '' }}">
+            <span><i class="bi bi-calendar-day"></i> Daily Plans</span>
+            <span class="filter-count">{{ counts.daily }}</span>
+        </a>
+        <a href="/plans?filter=weekly" class="filter-item {{ 'active' if filter_type == 'weekly' else '' }}">
+            <span><i class="bi bi-calendar-week"></i> Weekly Plans</span>
+            <span class="filter-count">{{ counts.weekly }}</span>
+        </a>
+        <a href="/plans?filter=productivity_report" class="filter-item {{ 'active' if filter_type == 'productivity_report' else '' }}">
+            <span><i class="bi bi-bar-chart"></i> Reports</span>
+            <span class="filter-count">{{ counts.productivity_report }}</span>
+        </a>
+    </div>
+
+    <div class="tasks-main">
+        <h4 class="mb-1">Saved Plans</h4>
+        <p class="text-muted mb-4">{{ plans|length }} plan(s)</p>
+
+        {% if plans %}
+        <div class="plan-list">
+            {% for p in plans %}
+            <div class="plan-card">
+                <div class="plan-card-header">
+                    <span class="plan-type-badge plan-type-{{ p.plan_type }}">
+                        {% if p.plan_type == 'daily' %}<i class="bi bi-calendar-day"></i> Daily Plan
+                        {% elif p.plan_type == 'weekly' %}<i class="bi bi-calendar-week"></i> Weekly Plan
+                        {% else %}<i class="bi bi-bar-chart"></i> Productivity Report
+                        {% endif %}
+                    </span>
+                    <span class="text-muted" style="font-size:11.5px;">{{ p.created_at.strftime('%b %d, %Y %H:%M') }}</span>
+                </div>
+                <div class="plan-range">{{ p.date_range }} &middot; {{ p.task_count }} item(s)</div>
+
+                {% if p.plan_type in ['daily', 'weekly'] and p.parsed_tasks %}
+                <div class="plan-tasks">
+                    {% for t in p.parsed_tasks %}
+                    <div class="plan-task-row">
+                        <span>{% if t.suggested_time %}<span class="time-slot">{{ t.suggested_time }}</span> {% endif %}{{ t.title }}</span>
+                        <span class="priority-badge priority-{{ t.priority }}">{{ t.priority }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% elif p.plan_type == 'productivity_report' and p.parsed_tasks %}
+                <div class="stat-grid" style="margin-top: 10px; border-radius: 10px; overflow: hidden;">
+                    <div class="stat-box"><div class="stat-num">{{ p.parsed_tasks[0].completed_count }}</div><div class="stat-label">Completed</div></div>
+                    <div class="stat-box"><div class="stat-num">{{ p.parsed_tasks[0].pending_count }}</div><div class="stat-label">Pending</div></div>
+                    <div class="stat-box"><div class="stat-num">{{ p.parsed_tasks[0].overdue_count }}</div><div class="stat-label">Overdue</div></div>
+                    <div class="stat-box"><div class="stat-num">{{ p.parsed_tasks[0].high_priority_pending_count }}</div><div class="stat-label">High Priority</div></div>
+                </div>
+                {% else %}
+                <div class="text-muted" style="font-size:12.5px; margin-top:8px;">No tasks in this plan.</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="bi bi-calendar3"></i>
+            <p>No plans generated yet.</p>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}

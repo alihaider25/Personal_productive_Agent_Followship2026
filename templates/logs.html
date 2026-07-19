@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Execution Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid page-scroll">
+    <div class="row mt-4">
+        <div class="col-md-10 offset-md-1">
+            <h4 class="mb-1"><i class="bi bi-journal-text"></i> Execution Logs</h4>
+            <p class="text-muted mb-4">Step-by-step trace of every agent decision, tool call, and outcome.</p>
+
+            <div class="mb-3">
+                <select id="session-filter" class="form-select" style="max-width: 400px;">
+                    <option value="">All sessions</option>
+                    {% for s in sessions %}
+                    <option value="{{ s }}" {{ 'selected' if s == current_session else '' }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            {% if logs %}
+            <div class="log-timeline">
+                {% for log in logs %}
+                <div class="log-entry log-{{ log.status }}">
+                    <div class="log-entry-header">
+                        <span class="log-step-name">{{ log.step }}</span>
+                        <span class="log-status-badge status-{{ log.status }}">{{ log.status }}</span>
+                        <span class="log-time">{{ log.created_at.strftime('%H:%M:%S') }}</span>
+                    </div>
+                    {% if log.user_request %}
+                    <div class="log-request">"{{ log.user_request }}"</div>
+                    {% endif %}
+                    <div class="log-detail">{{ log.detail[:300] }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="bi bi-journal"></i>
+                <p>No execution logs yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("session-filter").addEventListener("change", function () {
+    const val = this.value;
+    window.location.href = val ? `/logs?session=${val}` : "/logs";
+});
+</script>
+{% endblock %}
