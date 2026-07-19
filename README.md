@@ -33,51 +33,56 @@ Unlike a standard chatbot that only generates text, this system:
 - **Frontend:** HTML, CSS, Bootstrap 5, vanilla JavaScript
 
 ## Project Structure
+## Project Structure
+
+```
 agent_project/
-├── app.py                    # Flask app factory
-├── config.py                 # Environment/config loader
+├── app.py                     # Flask app factory
+├── config.py                  # Environment/config loader
 │
 ├── agent/
-│   ├── controller.py          # Orchestrates the full reasoning pipeline
-│   ├── intent_analysis.py     # LLM-based intent + tool selection
-│   ├── validator.py           # Validates tool inputs against schema
-│   └── response_generator.py  # Converts tool results into natural language
+│   ├── controller.py           # Orchestrates the full reasoning pipeline
+│   ├── intent_analysis.py      # LLM-based intent + tool selection
+│   ├── validator.py            # Validates tool inputs against schema
+│   └── response_generator.py   # Converts tool results into natural language
 │
 ├── tools/
-│   ├── tool_registry.py       # Central tool registration system
-│   ├── task_tools.py          # create/list/complete/delete tasks
-│   ├── planning_tools.py      # daily/weekly plans, productivity reports
-│   ├── analysis_tools.py      # priority analysis, note summarization
-│   ├── notes_tools.py         # save/search notes
-│   └── email_tools.py         # email drafting
+│   ├── tool_registry.py        # Central tool registration system
+│   ├── task_tools.py           # create/list/complete/delete tasks
+│   ├── planning_tools.py       # daily/weekly plans, productivity reports
+│   ├── analysis_tools.py       # priority analysis, note summarization
+│   ├── notes_tools.py          # save/search notes
+│   └── email_tools.py          # email drafting
 │
 ├── models/
-│   └── db_models.py           # Task, Note, Plan, ExecutionLog, ApprovalRequest, AgentMessage
+│   └── db_models.py            # Task, Note, Plan, ExecutionLog, ApprovalRequest, AgentMessage
 │
 ├── services/
-│   └── llm_service.py         # OpenRouter API client
+│   └── llm_service.py          # OpenRouter API client
 │
 ├── logging_module/
-│   └── execution_logger.py    # Writes structured logs to MySQL
+│   └── execution_logger.py     # Writes structured logs to MySQL
 │
 ├── evaluation/
-│   └── test_cases.py          # Automated agent evaluation suite
+│   └── test_cases.py           # Automated agent evaluation suite
 │
 ├── routes/
-│   ├── agent_routes.py        # /agent/chat, /agent/history
-│   ├── approval_routes.py     # /approve, /reject, /approvals
-│   ├── tasks_routes.py        # /tasks (filterable board)
-│   ├── plans_routes.py        # /plans (plan history)
-│   └── logs_routes.py         # /logs (execution trace viewer)
+│   ├── agent_routes.py         # /agent/chat, /agent/history
+│   ├── approval_routes.py      # /approve, /reject, /approvals
+│   ├── tasks_routes.py         # /tasks (filterable board)
+│   ├── plans_routes.py         # /plans (plan history)
+│   └── logs_routes.py          # /logs (execution trace viewer)
 │
 ├── static/
 │   ├── css/style.css
-│   └── js/ (agent.js, approvals.js, toast.js, badge.js)
+│   └── js/                     # agent.js, approvals.js, toast.js, badge.js
 │
 ├── templates/
-│   ├── base.html, index.html, tasks.html, plans.html, approvals.html, logs.html
+│   ├── base.html, index.html, tasks.html
+│   └── plans.html, approvals.html, logs.html
 │
 └── reset_data.py               # Utility script to clear all data for a fresh demo
+```
 
 ## Architecture
 
